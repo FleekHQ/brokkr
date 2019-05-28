@@ -1,6 +1,6 @@
-import IClient from "./clients/iclient";
+import IClient from './clients/iclient';
 import Saga from './entities/saga';
-import { IWorker } from "./interfaces";
+import { IWorker } from './interfaces';
 
 class Brokkr {
   private client: IClient;
@@ -18,8 +18,8 @@ class Brokkr {
     return saga;
   }
 
-  public async loadPendingSagas(): Promise<Saga>{
-    throw "TODO: Implement this in case the service running this lib has to be restarted mid-process";
+  public async loadPendingSagas(): Promise<Saga> {
+    throw Error('TODO: Implement this in case the service running this lib has to be restarted mid-process');
   }
 
   public registerWorker(worker: IWorker) {

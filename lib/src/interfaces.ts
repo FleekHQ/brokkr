@@ -1,12 +1,12 @@
 export interface IHashMap {
-  [key: string]: any,
+  [key: string]: any;
 }
 
 export interface ITableMeta {
-  lastId: number,
-};
+  lastId: number;
+}
 
 export interface IWorker {
-  name: string,
-  run(args: any[], dependencyArgs?:IHashMap): void
+  name: string;
+  run(args: any[], dependencyArgs?: IHashMap): void;
 }

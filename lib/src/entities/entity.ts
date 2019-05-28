@@ -1,9 +1,9 @@
-import {IClient} from "../clients";
-import {create, get} from '../helpers/db';
-import { IHashMap } from "../interfaces";
+import { IClient } from '../clients';
+import { create, get } from '../helpers/db';
+import { IHashMap } from '../interfaces';
 
 export interface IEntity {
-  id?: string,
+  id?: string;
 }
 
 abstract class Entity<T extends IEntity> {
@@ -36,8 +36,10 @@ abstract class Entity<T extends IEntity> {
 
   public async getValues(): Promise<T> {
     const id = this.getId();
-    if (!id) { throw Error('Cannot get values from an uninitialized entity'); }
-    const result = await get<T>(this.client, this.namespace, this.tableName, id)
+    if (!id) {
+      throw Error('Cannot get values from an uninitialized entity');
+    }
+    const result = await get<T>(this.client, this.namespace, this.tableName, id);
     return result;
   }
 }

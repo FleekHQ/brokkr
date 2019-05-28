@@ -1,6 +1,6 @@
-import IClient from "../clients/iclient";
-import {create} from '../helpers/db';
-import Entity from "./entity";
+import IClient from '../clients/iclient';
+import { create } from '../helpers/db';
+import Entity from './entity';
 
 export const TABLE_NAME = 'saga_step';
 
@@ -15,15 +15,15 @@ export enum SagaStepStatus {
 }
 
 export interface ISagaStep {
-  id?: string,
-  args: any[],
-  dependsOn: string[],
-  workerName: string,
-  status?: SagaStepStatus,
-  compensatorOf?: string,
+  id?: string;
+  args: any[];
+  dependsOn: string[];
+  workerName: string;
+  status?: SagaStepStatus;
+  compensatorOf?: string;
 }
 
-class SagaStep extends Entity<ISagaStep>{
+class SagaStep extends Entity<ISagaStep> {
   protected sagaId: string | undefined;
 
   constructor(client: IClient, namespace: string) {
@@ -71,6 +71,6 @@ class SagaStep extends Entity<ISagaStep>{
 // this is so we can have fast lookup of the steps for a given Saga
 export const getSagaStepTableName = (sagaId: string) => {
   return `${TABLE_NAME}_${sagaId}`;
-}
+};
 
 export default SagaStep;

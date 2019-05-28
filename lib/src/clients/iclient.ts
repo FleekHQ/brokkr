@@ -1,4 +1,4 @@
-import {IHashMap} from '../interfaces';
+import { IHashMap } from '../interfaces';
 
 interface IClient {
   set<T>(table: string, key: string, value: T): Promise<boolean>;
