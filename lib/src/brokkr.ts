@@ -7,7 +7,7 @@ class Brokkr {
   private namespace: string;
   private workers: IWorker[] = [];
 
-  constructor(client: IClient, namespace: string) {
+  constructor(client: IClient, namespace: string = '') {
     this.client = client;
     this.namespace = namespace;
   }
