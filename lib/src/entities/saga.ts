@@ -36,11 +36,7 @@ class Saga extends Entity<ISaga> {
    * @param args The arguments to pass to the worker.
    * @param dependsOnSteps Defaults to []. If included, will not enqueue the step until all dependencies are complete. Also, will send the results of the dependencies to the worker when executing it.
    */
-  public async addStep(
-    workerName: string,
-    args: any[],
-    dependsOnSteps: string[] = [],
-  ) {
+  public async addStep(workerName: string, args: any[], dependsOnSteps: string[] = []) {
     const id = this.getId();
     if (!id) {
       throw Error('Cannot add a step for an uninitialized Saga');
@@ -63,9 +59,11 @@ class Saga extends Entity<ISaga> {
    * @param stepId The id of the step that finished
    * @param result The result of the execution of this step
    */
-  public async stepFinished(stepId: string, result?: any){
+  public async stepFinished(stepId: string, result?: any) {
     try {
-      if(result) { JSON.parse(JSON.stringify(result)); }
+      if (result) {
+        JSON.parse(JSON.stringify(result));
+      }
     } catch (error) {
       throw Error('Error in stepFinished: `result` must be JSON encodable.');
     }
@@ -75,9 +73,7 @@ class Saga extends Entity<ISaga> {
       throw Error('Error in stepFinished: Saga is not initialized');
     }
 
-    const stepValues = await get<ISagaStep>(
-      this.client, this.namespace, getSagaStepTableName(id), stepId
-    );
+    const stepValues = await get<ISagaStep>(this.client, this.namespace, getSagaStepTableName(id), stepId);
     let step = new SagaStep(this.client, this.namespace);
     step = step.instantiateFromSaga(id, stepValues);
     await step.finished(result);
@@ -92,7 +88,7 @@ class Saga extends Entity<ISaga> {
    * (using their compensators).
    * @param stepId The id of the step that failed
    */
-  public async stepFailed(stepId: string){
+  public async stepFailed(stepId: string) {
     const id = this.getId();
     if (!id) {
       throw Error('Error in stepFailed: Saga is not initialized');
@@ -108,9 +104,7 @@ class Saga extends Entity<ISaga> {
     const stepsToRollback = allSteps.filter(currStep => currStep.status === SagaStepStatus.Finished);
 
     // Mark current step as failed
-    const failedStepValues = await get<ISagaStep>(
-      this.client, this.namespace, getSagaStepTableName(id), stepId
-    );
+    const failedStepValues = await get<ISagaStep>(this.client, this.namespace, getSagaStepTableName(id), stepId);
     let failedStep = new SagaStep(this.client, this.namespace);
     failedStep = failedStep.instantiateFromSaga(id, failedStepValues);
     await failedStep.fail();
@@ -152,9 +146,7 @@ class Saga extends Entity<ISaga> {
     }
 
     const allStepIds = await getIds(this.client, this.namespace, getSagaStepTableName(id));
-    const allSteps = await getMultiple<ISagaStep>(
-      this.client, this.namespace, getSagaStepTableName(id), allStepIds
-    );
+    const allSteps = await getMultiple<ISagaStep>(this.client, this.namespace, getSagaStepTableName(id), allStepIds);
 
     return allSteps;
   }
@@ -175,15 +167,13 @@ class Saga extends Entity<ISaga> {
     const unqueuedSteps = allSteps.filter(step => step.status === SagaStepStatus.Created);
 
     if (unqueuedSteps.length === 0) {
-      await update<ISaga>(
-        this.client, this.namespace, this.tableName, id, { status: SagaStatus.Finished }
-      );
+      await update<ISaga>(this.client, this.namespace, this.tableName, id, { status: SagaStatus.Finished });
       return;
     }
 
     const stepsToExecute: ISagaStep[] = [];
     unqueuedSteps.forEach(unqueuedStep => {
-      const dependencies = unqueuedStep.dependsOn || [];;
+      const dependencies = unqueuedStep.dependsOn || [];
       const currDependentSteps = allSteps.filter(step => step.id && dependencies.includes(step.id));
       let allFinished = false;
       if (!currDependentSteps || currDependentSteps.length === 0) {

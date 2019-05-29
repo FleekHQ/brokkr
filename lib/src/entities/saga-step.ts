@@ -22,8 +22,8 @@ export interface ISagaStep {
   workerName: string;
   status?: SagaStepStatus;
   compensatorId?: string;
-  result?: any,
-  dependencyArgs?: any[],
+  result?: any;
+  dependencyArgs?: any[];
 }
 
 class SagaStep extends Entity<ISagaStep> {
@@ -85,15 +85,9 @@ class SagaStep extends Entity<ISagaStep> {
     });
 
     // Update the current step so that it points to the compensator
-    await update(
-      this.client,
-      this.namespace,
-      getSagaStepTableName(this.sagaId),
-      id,
-      {
-        compensatorId: newStep.getId(),
-      },
-    );
+    await update(this.client, this.namespace, getSagaStepTableName(this.sagaId), id, {
+      compensatorId: newStep.getId(),
+    });
 
     return newStep;
   }
@@ -111,29 +105,23 @@ class SagaStep extends Entity<ISagaStep> {
     }
 
     const stepValues = await this.getValues();
-    const dependencySteps = (stepValues.dependsOn && stepValues.dependsOn.length > 0)
-      ? await getMultiple<ISagaStep>(
-        this.client, this.namespace, getSagaStepTableName(sagaId), stepValues.dependsOn
-      ) : [];
+    const dependencySteps =
+      stepValues.dependsOn && stepValues.dependsOn.length > 0
+        ? await getMultiple<ISagaStep>(this.client, this.namespace, getSagaStepTableName(sagaId), stepValues.dependsOn)
+        : [];
 
     const errorDependency = dependencySteps.find(
-      dep => (dep.status !== SagaStepStatus.Finished && dep.status !== SagaStepStatus.RolledBack)
+      dep => dep.status !== SagaStepStatus.Finished && dep.status !== SagaStepStatus.RolledBack,
     );
     if (errorDependency) {
       // This shouldn't happen as we make sure all deps are finished in tick()
       throw Error('Unexpected error: Enqueueing saga step with an unfinished dependency');
     }
 
-    await update(
-      this.client,
-      this.namespace,
-      getSagaStepTableName(sagaId),
-      id,
-      {
-        dependencyArgs: dependencySteps.map(dep => dep.result),
-        status: SagaStepStatus.Queued,
-      },
-    );
+    await update(this.client, this.namespace, getSagaStepTableName(sagaId), id, {
+      dependencyArgs: dependencySteps.map(dep => dep.result),
+      status: SagaStepStatus.Queued,
+    });
   }
 
   /**
@@ -147,16 +135,10 @@ class SagaStep extends Entity<ISagaStep> {
     if (!sagaId || !id) {
       throw Error('Finishing saga step for an uninitialized step');
     }
-    await update(
-      this.client,
-      this.namespace,
-      getSagaStepTableName(sagaId),
-      id,
-      {
-        result,
-        status: SagaStepStatus.Finished,
-      },
-    );
+    await update(this.client, this.namespace, getSagaStepTableName(sagaId), id, {
+      result,
+      status: SagaStepStatus.Finished,
+    });
   }
 
   /**
@@ -170,15 +152,9 @@ class SagaStep extends Entity<ISagaStep> {
       throw Error('Failing saga step for an uninitialized step');
     }
 
-    await update(
-      this.client,
-      this.namespace,
-      getSagaStepTableName(sagaId),
-      id,
-      {
-        status: SagaStepStatus.Failed,
-      },
-    );
+    await update(this.client, this.namespace, getSagaStepTableName(sagaId), id, {
+      status: SagaStepStatus.Failed,
+    });
   }
 
   /**
@@ -192,22 +168,19 @@ class SagaStep extends Entity<ISagaStep> {
     if (!sagaId || !id) {
       throw Error('Rolling back saga step for an uninitialized step');
     }
-    const {compensatorId} = await this.getValues();
+    const { compensatorId } = await this.getValues();
 
-    await update(
-      this.client,
-      this.namespace,
-      getSagaStepTableName(sagaId),
-      id,
-      {
-        status: SagaStepStatus.RolledBack,
-      },
-    );
+    await update(this.client, this.namespace, getSagaStepTableName(sagaId), id, {
+      status: SagaStepStatus.RolledBack,
+    });
 
     // Get the compensator if any
     if (compensatorId) {
       const compensatorValues = await get<ISagaStep>(
-        this.client, this.namespace, getSagaStepTableName(sagaId), compensatorId
+        this.client,
+        this.namespace,
+        getSagaStepTableName(sagaId),
+        compensatorId,
       );
 
       // Enqueue the compensator
