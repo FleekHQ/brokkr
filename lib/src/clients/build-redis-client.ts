@@ -19,7 +19,13 @@ const buildRedisClient = (client: RedisClient): IClient => {
         if (err) {
           reject(err);
         }
-        resolve(JSON.parse(res));
+        let parsedJSON;
+        try {
+          parsedJSON = JSON.parse(res)
+        } catch (err) {
+          reject(`Could not parse JSON key when fetching from redis: ${err.message}`)
+        }
+        resolve(parsedJSON);
       });
     });
   };
