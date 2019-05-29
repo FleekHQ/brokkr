@@ -33,8 +33,9 @@ export const update = async <T>(client: IClient, namespace: string, tableName: s
   const oldValues = await client.get<T>(getTable(namespace, tableName), id);
   await client.set<T>(getTable(namespace, tableName), id, {
     ...oldValues,
-    values,
+    ...values,
   });
+  const newValues = await client.get<T>(getTable(namespace, tableName), id);
 };
 
 export const get = async <T>(client: IClient, namespace: string, tableName: string, id: string) => {

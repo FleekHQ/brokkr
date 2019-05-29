@@ -10,7 +10,7 @@
     "dist/**/*"
   ],
   "scripts": {
-    "test": "jest --config jestconfig.json",
+    "test": "jest --config jestconfig.json --runInBand",
     "build": "tsc",
     "format": "prettier --write \"lib/src/**/*.ts\" \"lib/src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",

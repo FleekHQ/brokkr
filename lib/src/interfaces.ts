@@ -8,5 +8,5 @@ export interface ITableMeta {
 
 export interface IWorker {
   name: string;
-  run(args: any[], dependencyArgs?: IHashMap): void;
+  run(args: any[], dependencyArgs?: any[]): void;
 }

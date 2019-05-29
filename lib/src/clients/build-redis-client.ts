@@ -37,6 +37,9 @@ const buildRedisClient = (client: RedisClient): IClient => {
 
   const getMultiple = <T>(table: string, keyArray: string[]) => {
     return new Promise<T[]>((resolve, reject) => {
+      if (keyArray.length === 0) {
+        return resolve([]);
+      }
       client.hmget(table, keyArray, (err, res) => {
         if (err) {
           reject(err);
