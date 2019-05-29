@@ -1,4 +1,4 @@
-import { Saga } from "./entities";
+import { Saga } from './entities';
 
 export interface IHashMap {
   [key: string]: any;

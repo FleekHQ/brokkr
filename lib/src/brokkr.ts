@@ -1,13 +1,12 @@
 import IClient from './clients/iclient';
-import Saga, {ISaga, SagaStatus, TABLE_NAME as SAGA_TABLE_NAME} from './entities/saga';
-import {getIds, getMultiple} from './helpers/db';
+import Saga, { ISaga, SagaStatus, TABLE_NAME as SAGA_TABLE_NAME } from './entities/saga';
+import { getIds, getMultiple } from './helpers/db';
 import { IWorker } from './interfaces';
-import QueueManager, {IQueueManagerOpts} from './queue-manager';
+import QueueManager, { IQueueManagerOpts } from './queue-manager';
 
 // DEVNOTE: Leaving this for now in case we add options in the future
 // tslint:disable-next-line: no-empty-interface
-interface IBrokkrOpts {
-}
+interface IBrokkrOpts {}
 
 class Brokkr {
   private client: IClient;
@@ -18,7 +17,7 @@ class Brokkr {
     client: IClient,
     namespace: string = '',
     brokkrOpts: IBrokkrOpts = {},
-    queueOpts: IQueueManagerOpts = {}
+    queueOpts: IQueueManagerOpts = {},
   ) {
     this.client = client;
     this.namespace = namespace;
@@ -75,7 +74,7 @@ class Brokkr {
     const sagas = await getMultiple<ISaga>(this.client, this.namespace, SAGA_TABLE_NAME, sagaIds);
 
     const unfinishedSagas = sagas.filter(
-      saga => saga.status !== SagaStatus.Finished && saga.status !== SagaStatus.Failed
+      saga => saga.status !== SagaStatus.Finished && saga.status !== SagaStatus.Failed,
     );
 
     unfinishedSagas.forEach(sagaValues => {

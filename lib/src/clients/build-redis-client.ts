@@ -21,9 +21,9 @@ const buildRedisClient = (client: RedisClient): IClient => {
         }
         let parsedJSON;
         try {
-          parsedJSON = JSON.parse(res)
+          parsedJSON = JSON.parse(res);
         } catch (err) {
-          reject(`Could not parse JSON key when fetching from redis: ${err.message}`)
+          reject(`Could not parse JSON key when fetching from redis: ${err.message}`);
         }
         resolve(parsedJSON);
       });

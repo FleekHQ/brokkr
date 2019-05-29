@@ -1,13 +1,13 @@
 import IClient from './clients/iclient';
-import Saga, {SagaStatus} from './entities/saga';
-import {getSagaStepTableName, ISagaStep, SagaStepStatus} from './entities/saga-step';
-import {getIds, getMultiple, update} from './helpers/db';
+import Saga, { SagaStatus } from './entities/saga';
+import { getSagaStepTableName, ISagaStep, SagaStepStatus } from './entities/saga-step';
+import { getIds, getMultiple, update } from './helpers/db';
 import { IHashMap, IWorker } from './interfaces';
 
 export interface IQueueManagerOpts {
-  queueSize?: number,
-  pollingIntervalInMs?: number,
-  failSagaOnError?: boolean
+  queueSize?: number;
+  pollingIntervalInMs?: number;
+  failSagaOnError?: boolean;
 }
 
 interface ISagaHashMap {
@@ -33,11 +33,7 @@ class QueueManager {
   constructor(
     client: IClient,
     namespace: string,
-    {
-      queueSize = 25,
-      pollingIntervalInMs = 1000,
-      failSagaOnError = true,
-    }: IQueueManagerOpts
+    { queueSize = 25, pollingIntervalInMs = 1000, failSagaOnError = true }: IQueueManagerOpts,
   ) {
     this.client = client;
     this.namespace = namespace;
@@ -70,7 +66,7 @@ class QueueManager {
    * @param workerName The name of the worker
    */
   public getWorker(workerName: string) {
-    return this.workers[workerName]
+    return this.workers[workerName];
   }
 
   /**
@@ -122,7 +118,9 @@ class QueueManager {
    * Also removes steps/sagas that are already finished.
    */
   protected async tick() {
-    if (this.tickLock) { return; } // Prevent running many ticks in parallel
+    if (this.tickLock) {
+      return;
+    } // Prevent running many ticks in parallel
     this.tickLock = true;
 
     // Get all enqueued steps
@@ -140,23 +138,30 @@ class QueueManager {
 
       const allStepIds = await getIds(this.client, this.namespace, getSagaStepTableName(sagaId));
       const allStepInfo = await getMultiple<ISagaStep>(
-        this.client, this.namespace, getSagaStepTableName(sagaId), allStepIds
+        this.client,
+        this.namespace,
+        getSagaStepTableName(sagaId),
+        allStepIds,
       );
 
-      const stepPromises = allStepInfo.map(async (step) => {
+      const stepPromises = allStepInfo.map(async step => {
         // If step is not initialized, do nothing.
-        if (!step.id) { return };
+        if (!step.id) {
+          return;
+        }
         // If the step is now finished and was running, remove it from the queue
         if (this.queueMap[step.id] && step.status !== SagaStepStatus.Running) {
           delete this.queueMap[step.id];
         }
         // If the step is enqueued and there is space available, run it
-        if (!this.queueMap[step.id]
-            && step.status === SagaStepStatus.Queued
-            && this.getTotalRunning() < this.queueSize) {
-              this.queueMap[step.id] = 'running';
-              return this.runStep(step, saga);
-            }
+        if (
+          !this.queueMap[step.id] &&
+          step.status === SagaStepStatus.Queued &&
+          this.getTotalRunning() < this.queueSize
+        ) {
+          this.queueMap[step.id] = 'running';
+          return this.runStep(step, saga);
+        }
       });
 
       // If the saga is finished, remove it from the loop
@@ -178,7 +183,7 @@ class QueueManager {
    * @param saga The Saga that contains that step
    */
   protected async runStep(step: ISagaStep, saga: Saga) {
-    const {id: stepId, workerName} = step;
+    const { id: stepId, workerName } = step;
     const sagaId = saga.getId();
     if (!stepId || !sagaId) {
       // This should never happen, as we validate it is iniaizlied before running in tick()
@@ -188,7 +193,7 @@ class QueueManager {
     const worker = this.workers[workerName];
     if (!worker) {
       // tslint:disable-next-line: no-console
-      console.error(`Error while running step: Worker "${workerName}" does not exist.`)
+      console.error(`Error while running step: Worker "${workerName}" does not exist.`);
       if (this.failSagaOnError) {
         await saga.stepFailed(stepId);
       }
