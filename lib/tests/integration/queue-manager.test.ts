@@ -1,7 +1,7 @@
 import {RedisClient} from 'redis';
 import { Brokkr, buildRedisClient, IClient, Saga, SagaStatus, SagaStep, SagaStepStatus } from '../../src';
-import redisClientBuilder from '../helpers/redis-client-builder';
 import { IWorker } from '../../src/interfaces';
+import redisClientBuilder from '../helpers/redis-client-builder';
 
 describe('Worker integration tests', () => {
   let brokkr: Brokkr;
@@ -27,7 +27,7 @@ describe('Worker integration tests', () => {
     redisClient.quit(done)
   })
 
-  describe('when working with a saga', () => {
+  describe('when working with a saga and a worker', () => {
     let saga: Saga;
     let step: SagaStep;
     let stepId: string;
@@ -75,7 +75,7 @@ describe('Worker integration tests', () => {
         stepValues = await step.getValues();
         expect(stepValues.status).toEqual(SagaStepStatus.Running);
         expect(workerMock).toBeCalledTimes(1);
-        expect(workerMock).toBeCalledWith(args, []);
+        expect(workerMock).toBeCalledWith(args, [], saga, stepId);
         expect(brokkr.getQueueManager().getTotalRunning()).toEqual(1);
 
         // Finish the running process

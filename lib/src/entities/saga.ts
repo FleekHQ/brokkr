@@ -36,7 +36,7 @@ class Saga extends Entity<ISaga> {
    * @param args The arguments to pass to the worker.
    * @param dependsOnSteps Defaults to []. If included, will not enqueue the step until all dependencies are complete. Also, will send the results of the dependencies to the worker when executing it.
    */
-  public async addStep(workerName: string, args: any[], dependsOnSteps: string[] = []) {
+  public async addStep(workerName: string, args: any[] = [], dependsOnSteps: string[] = []) {
     const id = this.getId();
     if (!id) {
       throw Error('Cannot add a step for an uninitialized Saga');

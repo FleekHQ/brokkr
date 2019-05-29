@@ -10,12 +10,20 @@ export interface IQueueManagerOpts {
   failSagaOnError?: boolean
 }
 
+interface ISagaHashMap {
+  [key: string]: Saga;
+}
+
+interface IWorkerHashMap {
+  [key: string]: IWorker;
+}
+
 class QueueManager {
   protected queueSize: number;
   protected failSagaOnError: boolean;
   protected pollingIntervalInMs: number;
-  protected sagas: Saga[];
-  protected workers: IWorker[];
+  protected sagas: ISagaHashMap;
+  protected workers: IWorkerHashMap;
   protected client: IClient;
   protected namespace: string;
   protected queueMap: IHashMap;
@@ -36,8 +44,8 @@ class QueueManager {
     this.queueSize = queueSize;
     this.pollingIntervalInMs = pollingIntervalInMs;
     this.failSagaOnError = failSagaOnError;
-    this.sagas = [];
-    this.workers = [];
+    this.sagas = {};
+    this.workers = {};
     this.queueMap = {};
     this.tickLock = false;
   }
@@ -50,13 +58,33 @@ class QueueManager {
   }
 
   /**
+   * Gets a registered Saga by id
+   * @param sagaId The id of the Saga
+   */
+  public getSaga(sagaId: string) {
+    return this.sagas[sagaId];
+  }
+
+  /**
+   * Gets a registered worker by name
+   * @param workerName The name of the worker
+   */
+  public getWorker(workerName: string) {
+    return this.workers[workerName]
+  }
+
+  /**
    * Adds a Saga to the queue manager.
    * When a Saga is added, it's going to be constantly polled to check if there are
    * available steps to run.
    * @param saga A Saga object
    */
   public addSaga(saga: Saga) {
-    this.sagas.push(saga);
+    const sagaId = saga.getId();
+    if (!sagaId) {
+      throw Error('Cannot add uninitialized saga');
+    }
+    this.sagas[sagaId] = saga;
   }
 
   /**
@@ -65,7 +93,7 @@ class QueueManager {
    * @param worker A worker object
    */
   public addWorker(worker: IWorker) {
-    this.workers.push(worker);
+    this.workers[worker.name] = worker;
   }
 
   /**
@@ -98,8 +126,10 @@ class QueueManager {
     this.tickLock = true;
 
     // Get all enqueued steps
-    const sagas = [...this.sagas];
-    const sagaPromises = sagas.map(async (saga) => {
+    const sagas = Object.keys(this.sagas);
+    const sagaPromises = sagas.map(async (sagaKey: string) => {
+      const saga = this.sagas[sagaKey];
+
       const sagaId = saga.getId();
       if (!sagaId) {
         // Don't do work for an uninitialized saga
@@ -131,7 +161,7 @@ class QueueManager {
 
       // If the saga is finished, remove it from the loop
       if (sagaValues.status === SagaStatus.Finished || sagaValues.status === SagaStatus.Failed) {
-        this.sagas = this.sagas.filter(currSaga => currSaga !== saga);
+        delete this.sagas[sagaKey];
         return;
       }
 
@@ -155,7 +185,7 @@ class QueueManager {
       throw Error('Attempting to run a step that is not initialized');
     }
 
-    const worker = this.workers.find(w => w.name === workerName);
+    const worker = this.workers[workerName];
     if (!worker) {
       // tslint:disable-next-line: no-console
       console.error(`Error while running step: Worker "${workerName}" does not exist.`)
@@ -169,7 +199,7 @@ class QueueManager {
       status: SagaStepStatus.Running,
     });
 
-    return worker.run(step.args, step.dependencyArgs);
+    worker.run(step.args, step.dependencyArgs || [], saga, stepId);
   }
 }
 

@@ -26,6 +26,22 @@ class Brokkr {
   }
 
   /**
+   * Gets a previously created Saga by id
+   * @param sagaId The id of the Saga
+   */
+  public getSaga(sagaId: string) {
+    return this.queueManager.getSaga(sagaId);
+  }
+
+  /**
+   * Gets a registered worker by name
+   * @param workerName The name of the worker
+   */
+  public getWorker(workerName: string) {
+    return this.queueManager.getWorker(workerName);
+  }
+
+  /**
    * Stops the worker queue. Enqueued steps will remain enqueued until it's restarted.
    */
   public stopWorkers() {
@@ -57,6 +73,16 @@ class Brokkr {
    */
   public registerWorker(worker: IWorker) {
     this.queueManager.addWorker(worker);
+  }
+
+  /**
+   * Calls registerWorker for each worker passed as an argument
+   * @param args The workers to register
+   */
+  public registerWorkers(...workers: IWorker[]) {
+    workers.forEach(worker => {
+      this.registerWorker(worker);
+    });
   }
 }
 
