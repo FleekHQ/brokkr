@@ -2,6 +2,8 @@
 
 Brokkr is a background job orchestrator for Node. It's currently designed to use Redis and Kafka as the backbone, but can be easily expanded for other stacks.
 
+Brokkr is lightweight, has no dependencies, and is designed to be failure resistant.
+
 ## Installation
 
 `npm install --save brokkr`
