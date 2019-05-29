@@ -18,7 +18,7 @@ describe('Worker integration tests', () => {
     // Reset db after each test
     redisClient.flushdb(() => {
       client = buildRedisClient(redisClient);
-      brokkr = new Brokkr(client, namespace, {pollingIntervalInMs: 100});
+      brokkr = new Brokkr(client, namespace, {}, {pollingIntervalInMs: 100});
       done();
     });
   });

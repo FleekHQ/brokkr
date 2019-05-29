@@ -43,8 +43,9 @@ const myWorker = require('./myWorker');
 const client = redis.createClient(REDIS_PORT, REDIS_HOST, {});
 const brokkrRedisClient = buildRedisClient(client);
 
-const brokkr = new Brokkr(brokkrRedisClient);
-brokkr.registerWorker(myWorker);
+const brokkr = new Brokkr(brokkrRedisClient, "myBrokkrNamespace"); // namespace is to prevent collisions with other stuff you store in Redis
+brokkr.registerWorker(myWorker); // We register myWorker at brokkr.
+await brokkr.restorePreviousState(); // In case we had pending tasks from a previous time
 
 // Here is a good place to add brokkr to your server's ctx
 ctx.brokkr = brokkr; // Or whichever syntax you are using
@@ -119,8 +120,10 @@ const {hammerHeadFactory, handleFactory, hammerFactory} = require('./workers.js'
 const client = redis.createClient(REDIS_PORT, REDIS_HOST, {});
 const brokkrRedisClient = buildRedisClient(client);
 
-const brokkr = new Brokkr(brokkrRedisClient);
-brokkr.registerWorkers(hammerHeadFactory, handleFactory, hammerFactory);
+const brokkr = new Brokkr(brokkrRedisClient, "myBrokkrNamespace");
+brokkr.registerWorkers(hammerHeadFactory, handleFactory, hammerFactory); // We can register multiple workers at once
+await brokkr.restorePreviousState(); // In case we had pending tasks from a previous time
+
 
 ctx.brokkr = brokkr;
 ```

@@ -1,7 +1,7 @@
 import {RedisClient} from 'redis';
-import { Brokkr, buildRedisClient, IClient, Saga, SagaStatus, SagaStep, SagaStepStatus } from '../../src';
-import redisClientBuilder from '../helpers/redis-client-builder';
+import { Brokkr, buildRedisClient, IClient, Saga, SagaStep } from '../../src';
 import { IWorker } from '../../src/interfaces';
+import redisClientBuilder from '../helpers/redis-client-builder';
 
 describe('Brokkr integration tests', () => {
   let brokkr: Brokkr;
@@ -18,7 +18,7 @@ describe('Brokkr integration tests', () => {
     // Reset db after each test
     redisClient.flushdb(() => {
       client = buildRedisClient(redisClient);
-      brokkr = new Brokkr(client, namespace, {pollingIntervalInMs: 100});
+      brokkr = new Brokkr(client, namespace, {}, {pollingIntervalInMs: 100});
       done();
     });
   });
@@ -81,6 +81,27 @@ describe('Brokkr integration tests', () => {
 
       expect(brokkr.getWorker("example")).toEqual(worker2);
       expect(brokkr.getWorker("example2")).toEqual(worker3);
+    });
+
+    describe('when brokkr is started with an already existing previous state', () => {
+      let brokkr2: Brokkr;
+      let sagaId: string;
+      beforeEach(() => {
+        sagaId = saga.getId() || '';
+        if(sagaId === '') {
+          throw Error('saga must be initialized.');
+        }
+      })
+
+      it('restores the previous sagas', async (done) => {
+        brokkr2 = new Brokkr(client, namespace);
+        expect(brokkr2.getSaga(sagaId)).not.toBeDefined();
+        await brokkr2.restorePreviousState();
+        expect(brokkr2.getSaga(sagaId)).toBeDefined();
+        done();
+      });
+
+
 
     })
 

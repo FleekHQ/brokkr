@@ -1,14 +1,25 @@
 import IClient from './clients/iclient';
-import Saga from './entities/saga';
+import Saga, {ISaga, SagaStatus, TABLE_NAME as SAGA_TABLE_NAME} from './entities/saga';
+import {getIds, getMultiple} from './helpers/db';
 import { IWorker } from './interfaces';
 import QueueManager, {IQueueManagerOpts} from './queue-manager';
+
+// DEVNOTE: Leaving this for now in case we add options in the future
+// tslint:disable-next-line: no-empty-interface
+interface IBrokkrOpts {
+}
 
 class Brokkr {
   private client: IClient;
   private namespace: string;
   private queueManager: QueueManager;
 
-  constructor(client: IClient, namespace: string = '', queueOpts: IQueueManagerOpts = {}) {
+  constructor(
+    client: IClient,
+    namespace: string = '',
+    brokkrOpts: IBrokkrOpts = {},
+    queueOpts: IQueueManagerOpts = {}
+  ) {
     this.client = client;
     this.namespace = namespace;
     this.queueManager = new QueueManager(this.client, this.namespace, queueOpts);
@@ -56,8 +67,22 @@ class Brokkr {
     this.queueManager.start();
   }
 
-  public async restart(): Promise<Saga> {
-    throw Error('TODO: Implement this in case the service running this lib has to be restarted mid-process');
+  /**
+   * Looks for any Saga that exists in the storage and initiates a worker for it if it's not finished
+   */
+  public async restorePreviousState() {
+    const sagaIds = await getIds(this.client, this.namespace, SAGA_TABLE_NAME);
+    const sagas = await getMultiple<ISaga>(this.client, this.namespace, SAGA_TABLE_NAME, sagaIds);
+
+    const unfinishedSagas = sagas.filter(
+      saga => saga.status !== SagaStatus.Finished && saga.status !== SagaStatus.Failed
+    );
+
+    unfinishedSagas.forEach(sagaValues => {
+      let saga = new Saga(this.client, this.namespace);
+      saga = saga.instantiate(sagaValues);
+      this.queueManager.addSaga(saga);
+    });
   }
 
   /**
