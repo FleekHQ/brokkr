@@ -1,0 +1,45 @@
+{
+  "name": "brokkr",
+  "version": "0.1.0-prerelease-3",
+  "description": "Background job processing and orchestrator for Node",
+  "main": "lib/dist/index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "test": "jest --config jestconfig.json --runInBand",
+    "build": "tsc",
+    "format": "prettier --write \"lib/src/**/*.ts\" \"lib/src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint",
+    "preversion": "npm run lint",
+    "version": "npm run format && git add -A src",
+    "postversion": "git push && git push --tags"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Terminal-Systems/brokkr.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Terminal-Systems/brokkr/issues"
+  },
+  "homepage": "https://github.com/Terminal-Systems/brokkr#readme",
+  "devDependencies": {
+    "@types/jest": "^24.0.13",
+    "@types/redis": "^2.8.12",
+    "jest": "^24.8.0",
+    "prettier": "^1.17.1",
+    "redis": "^2.8.0",
+    "ts-jest": "^24.0.2",
+    "tslint": "^5.16.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.4.5"
+  },
+  "dependencies": {}
+}
