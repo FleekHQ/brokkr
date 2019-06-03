@@ -1,30 +1,20 @@
 import {RedisClient} from 'redis';
-import { Brokkr, buildRedisClient, IClient, Saga, SagaStatus, SagaStep, SagaStepStatus } from '../../src';
-import redisClientBuilder from '../helpers/redis-client-builder';
+import { Brokkr, buildInMemoryClient, IClient, Saga, SagaStatus, SagaStep, SagaStepStatus } from '../../../src';
+import redisClientBuilder from '../../helpers/redis-client-builder';
 
 describe('Saga integration tests', () => {
   let brokkr: Brokkr;
   let client: IClient;
-  let redisClient: RedisClient;
 
   const namespace = 'MyCoolNamespace';
 
-  beforeAll(() => {
-    redisClient = redisClientBuilder();
-  });
-
   beforeEach((done) => {
     // Reset db after each test
-    redisClient.flushdb(() => {
-      client = buildRedisClient(redisClient);
-      brokkr = new Brokkr(client, namespace);
-      done();
-    });
+    client = buildInMemoryClient();
+    brokkr = new Brokkr(client, namespace);
+    done();
   });
 
-  afterAll((done) => {
-    redisClient.quit(done)
-  })
 
   it('can create a bunch of sagas', async (done) => {
     const saga1 = await brokkr.createSaga();
