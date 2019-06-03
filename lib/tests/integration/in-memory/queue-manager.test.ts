@@ -1,7 +1,5 @@
-import {RedisClient} from 'redis';
 import { Brokkr, buildInMemoryClient, IClient, Saga, SagaStatus, SagaStep, SagaStepStatus } from '../../../src';
 import { IWorker } from '../../../src/interfaces';
-import redisClientBuilder from '../../helpers/redis-client-builder';
 
 describe('Worker integration tests', () => {
   let brokkr: Brokkr;
