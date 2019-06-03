@@ -1,31 +1,21 @@
 import {RedisClient} from 'redis';
-import { Brokkr, buildRedisClient, IClient, Saga, SagaStep } from '../../src';
-import { IWorker } from '../../src/interfaces';
-import redisClientBuilder from '../helpers/redis-client-builder';
+import { Brokkr, buildInMemoryClient, IClient, Saga, SagaStep } from '../../../src';
+import { IWorker } from '../../../src/interfaces';
+import redisClientBuilder from '../../helpers/redis-client-builder';
 
 describe('Brokkr integration tests', () => {
   let brokkr: Brokkr;
   let client: IClient;
-  let redisClient: RedisClient;
 
   const namespace = 'MyCoolNamespace';
 
-  beforeAll(() => {
-    redisClient = redisClientBuilder();
-  });
-
   beforeEach((done) => {
     // Reset db after each test
-    redisClient.flushdb(() => {
-      client = buildRedisClient(redisClient);
-      brokkr = new Brokkr(client, namespace, {}, {pollingIntervalInMs: 100});
-      done();
-    });
+    client = buildInMemoryClient();
+    brokkr = new Brokkr(client, namespace, {}, {pollingIntervalInMs: 100});
+    done();
   });
 
-  afterAll((done) => {
-    redisClient.quit(done)
-  })
 
   describe('when working with a saga and a worker', () => {
     let saga: Saga;

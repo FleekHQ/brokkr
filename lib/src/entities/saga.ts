@@ -1,5 +1,5 @@
 import IClient from '../clients/iclient';
-import { create, get, getIds, getMultiple, update } from '../helpers/db';
+import { get, getIds, getMultiple, update } from '../helpers/db';
 import Entity from './entity';
 import SagaStep, { getSagaStepTableName, ISagaStep, SagaStepStatus } from './saga-step';
 
