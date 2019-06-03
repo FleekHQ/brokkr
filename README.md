@@ -88,7 +88,7 @@ const hammerHeadFactory = {
 
 const handleFactory = {
   name: "HandleFactory",
-  run: async (args, saga, stepId) => {
+  run: async (args, _, saga, stepId) => {
     const [handleSize] = args;
     const handle = await createHandle(handleSize);
     saga.stepFinished(
