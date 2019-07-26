@@ -18,15 +18,18 @@ describe('Saga integration tests', () => {
   it('can create a bunch of sagas', async (done) => {
     const saga1 = await brokkr.createSaga();
     expect(saga1).toBeDefined();
-    expect(saga1.getId()).toEqual("1");
+    const saga1Id = saga1.getId();
+    expect(saga1Id).toBeDefined();
 
     const saga2 = await brokkr.createSaga();
     expect(saga2).toBeDefined();
-    expect(saga2.getId()).toEqual("2");
+    const saga2Id = saga2.getId()
+    expect(saga2Id).toBeDefined();
+    expect(saga2Id).not.toEqual(saga1Id);
 
     const saga2Values = await saga2.getValues();
     expect(saga2Values).toBeDefined();
-    expect(saga2Values.id).toEqual('2');
+    expect(saga2Values.id).toEqual(saga2Id);
     expect(saga2Values.status).toEqual(SagaStatus.Created);
     done();
   });
@@ -49,14 +52,14 @@ describe('Saga integration tests', () => {
       const step2 = await saga.addStep('worker2', ['hello'], [step1Id])
       expect(step2).toBeDefined();
       const step1Values = await step1.getValues();
-      expect(step1Values.id).toEqual('1');
-      expect(step1Values.args[0]).toEqual('2');
+      expect(step1Values.id).toBeDefined();
+      expect(step1Values.args[0]).toBeDefined();
       expect(step1Values.dependsOn).toEqual([])
       expect(step1Values.workerName).toEqual('worker1');
       expect(step1Values.status).toEqual(SagaStepStatus.Created);
 
       const step2Values = await step2.getValues();
-      expect(step2Values.id).toEqual('2');
+      expect(step2Values.id).toBeDefined();
       expect(step2Values.args[0]).toEqual('hello');
       expect(step2Values.dependsOn).toEqual([step1Id]);
       expect(step2Values.workerName).toEqual('worker2');
