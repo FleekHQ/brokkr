@@ -1,6 +1,6 @@
 {
   "name": "brokkr",
-  "version": "0.1.3-alpha-2",
+  "version": "0.2.0",
   "description": "Background job processing and orchestrator for Node",
   "main": "dist/index.js",
   "directories": {

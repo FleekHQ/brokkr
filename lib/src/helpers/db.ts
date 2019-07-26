@@ -1,5 +1,5 @@
+import uuid = require('uuid/v1');
 import { IClient } from '../clients';
-const uuid = require('uuid/v1');
 
 const getTable = (namespace: string, tableName: string) => `${namespace}_${tableName}`;
 
