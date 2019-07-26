@@ -1,26 +1,10 @@
 import { IClient } from '../clients';
-import { ITableMeta } from '../interfaces';
-
-const META_TABLE = 'meta';
+const uuid = require('uuid/v1');
 
 const getTable = (namespace: string, tableName: string) => `${namespace}_${tableName}`;
 
 export const create = async <T>(client: IClient, namespace: string, tableName: string, values: T) => {
-  const oldTableMeta = await client.get<ITableMeta>(getTable(namespace, META_TABLE), tableName);
-
-  // If there are no previous declarations for this table, create one
-  let newTableMeta: ITableMeta;
-  if (!oldTableMeta) {
-    newTableMeta = { lastId: 1 };
-    await client.set(getTable(namespace, META_TABLE), tableName, newTableMeta);
-  } else {
-    // else, increment the lastId value
-    newTableMeta = { lastId: oldTableMeta.lastId + 1 };
-    await client.set(getTable(namespace, META_TABLE), tableName, newTableMeta);
-  }
-
-  // store the new tuple
-  const id = newTableMeta.lastId.toString();
+  const id = uuid();
   const newValues = {
     id,
     ...values,
