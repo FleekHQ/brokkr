@@ -4,13 +4,14 @@ import { IWorker } from '../../../src/interfaces';
 describe('Brokkr integration tests', () => {
   let brokkr: Brokkr;
   let client: IClient;
+  const debugMode = false;
 
   const namespace = 'MyCoolNamespace';
 
   beforeEach((done) => {
     // Reset db after each test
     client = buildInMemoryClient();
-    brokkr = new Brokkr(client, namespace, {}, {pollingIntervalInMs: 100});
+    brokkr = new Brokkr(client, namespace, {debugMode}, {pollingIntervalInMs: 100});
     done();
   });
 

@@ -6,6 +6,7 @@ describe('Saga integration tests', () => {
   let brokkr: Brokkr;
   let client: IClient;
   let redisClient: RedisClient;
+  const debugMode = false;
 
   const namespace = 'MyCoolNamespace';
 
@@ -17,7 +18,7 @@ describe('Saga integration tests', () => {
     // Reset db after each test
     redisClient.flushdb(() => {
       client = buildRedisClient(redisClient);
-      brokkr = new Brokkr(client, namespace);
+      brokkr = new Brokkr(client, namespace, {debugMode});
       done();
     });
   });
@@ -314,6 +315,17 @@ describe('Saga integration tests', () => {
           expect(compensatorValues.dependencyArgs).toEqual([exampleResult]);
           expect(stepValues.status).toEqual(SagaStepStatus.RolledBack);
           expect(sagaValues.status).toEqual(SagaStatus.Failed);
+          done();
+        });
+
+        it('throws when adding a step with a missing dependency', async (done) => {
+          const wrongId = `${thirdStepId}00`;
+          expect(
+            saga.addStep(workerName, [], [wrongId])
+          ).rejects.toEqual(new Error(
+            `Error in SagaStep.createFromSaga: Dependent step with id "${wrongId}" has not been created.`
+          ));
+
           done();
         });
       });

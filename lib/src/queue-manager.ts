@@ -8,6 +8,7 @@ export interface IQueueManagerOpts {
   queueSize?: number;
   pollingIntervalInMs?: number;
   failSagaOnError?: boolean;
+  debugMode?: boolean;
 }
 
 interface ISagaHashMap {
@@ -29,17 +30,19 @@ class QueueManager {
   protected queueMap: IHashMap;
   protected pollingInterval: NodeJS.Timeout | undefined;
   protected tickLock: boolean;
+  protected debugMode?: boolean;
 
   constructor(
     client: IClient,
     namespace: string,
-    { queueSize = 25, pollingIntervalInMs = 1000, failSagaOnError = true }: IQueueManagerOpts,
+    { queueSize = 25, pollingIntervalInMs = 1000, failSagaOnError = true, debugMode = false }: IQueueManagerOpts,
   ) {
     this.client = client;
     this.namespace = namespace;
     this.queueSize = queueSize;
     this.pollingIntervalInMs = pollingIntervalInMs;
     this.failSagaOnError = failSagaOnError;
+    this.debugMode = debugMode;
     this.sagas = {};
     this.workers = {};
     this.queueMap = {};
@@ -80,6 +83,7 @@ class QueueManager {
     if (!sagaId) {
       throw Error('Cannot add uninitialized saga');
     }
+    this.debug(`Adding Saga with id ${sagaId}`);
     this.sagas[sagaId] = saga;
   }
 
@@ -89,6 +93,7 @@ class QueueManager {
    * @param worker A worker object
    */
   public addWorker(worker: IWorker) {
+    this.debug(`Adding Worker with name "${worker.name}"`);
     this.workers[worker.name] = worker;
   }
 
@@ -96,6 +101,7 @@ class QueueManager {
    * Starts running the queue
    */
   public start() {
+    this.debug(`Starting QueueManager with a polling interval of ${this.pollingIntervalInMs}ms`);
     this.pollingInterval = setInterval(() => {
       this.tick();
     }, this.pollingIntervalInMs);
@@ -105,6 +111,8 @@ class QueueManager {
    * Stops running the queue
    */
   public stop() {
+    this.debug(`Stopping QueueManager`);
+
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
     }
@@ -118,7 +126,9 @@ class QueueManager {
    * Also removes steps/sagas that are already finished.
    */
   protected async tick() {
+    this.debug(`Starting a tick`);
     if (this.tickLock) {
+      this.debug(`Another tick is currently running. Skipping this tick until the other one finishes.`);
       return;
     } // Prevent running many ticks in parallel
     this.tickLock = true;
@@ -126,10 +136,14 @@ class QueueManager {
     // Get all enqueued steps
     const sagas = Object.keys(this.sagas);
     const sagaPromises = sagas.map(async (sagaKey: string) => {
+
       const saga = this.sagas[sagaKey];
 
       const sagaId = saga.getId();
+      this.debug(`Processing Saga with id "${sagaId}"`);
+
       if (!sagaId) {
+        this.debug(`Saga is uninitialized. Skipping this saga.`);
         // Don't do work for an uninitialized saga
         return;
       }
@@ -144,6 +158,8 @@ class QueueManager {
         allStepIds,
       );
 
+      this.debug(`Iterating over ${allStepIds.length} steps for Saga "${sagaId}"`);
+
       const stepPromises = allStepInfo.map(async step => {
         // If step is not initialized, do nothing.
         if (!step.id) {
@@ -151,6 +167,7 @@ class QueueManager {
         }
         // If the step is now finished and was running, remove it from the queue
         if (this.queueMap[step.id] && step.status !== SagaStepStatus.Running) {
+          this.debug(`Step ${step.id} is finished. Removing it from the queue.`);
           delete this.queueMap[step.id];
         }
         // If the step is enqueued and there is space available, run it
@@ -159,6 +176,7 @@ class QueueManager {
           step.status === SagaStepStatus.Queued &&
           this.getTotalRunning() < this.queueSize
         ) {
+          this.debug(`Step ${step.id} is enqueued and ready. Executing it now.`);
           this.queueMap[step.id] = 'running';
           return this.runStep(step, saga);
         }
@@ -166,6 +184,7 @@ class QueueManager {
 
       // If the saga is finished, remove it from the loop
       if (sagaValues.status === SagaStatus.Finished || sagaValues.status === SagaStatus.Failed) {
+        this.debug(`Saga ${sagaId} is finished or failed. Removing it from the queue.`);
         delete this.sagas[sagaKey];
         return;
       }
@@ -174,6 +193,7 @@ class QueueManager {
     });
 
     await Promise.all(sagaPromises);
+    this.debug(`Tick finished`);
     this.tickLock = false;
   }
 
@@ -189,6 +209,7 @@ class QueueManager {
       // This should never happen, as we validate it is iniaizlied before running in tick()
       throw Error('Attempting to run a step that is not initialized');
     }
+    this.debug(`Running step ${stepId} for Saga ${sagaId}. Executing worker ${workerName}`);
 
     const worker = this.workers[workerName];
     if (!worker) {
@@ -205,6 +226,12 @@ class QueueManager {
     });
 
     worker.run(step.args, step.dependencyArgs || [], saga, stepId);
+  }
+
+  private debug(...msgs: string[]) {
+    if (!this.debugMode) { return; }
+    // tslint:disable-next-line: no-console
+    console.debug(`QueueManager: `, ...msgs);
   }
 }
 

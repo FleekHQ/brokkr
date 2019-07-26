@@ -6,12 +6,15 @@ import QueueManager, { IQueueManagerOpts } from './queue-manager';
 
 // DEVNOTE: Leaving this for now in case we add options in the future
 // tslint:disable-next-line: no-empty-interface
-interface IBrokkrOpts {}
+interface IBrokkrOpts {
+  debugMode?: boolean,
+}
 
 class Brokkr {
   private client: IClient;
   private namespace: string;
   private queueManager: QueueManager;
+  private debugMode?: boolean;
 
   constructor(
     client: IClient,
@@ -21,7 +24,11 @@ class Brokkr {
   ) {
     this.client = client;
     this.namespace = namespace;
-    this.queueManager = new QueueManager(this.client, this.namespace, queueOpts);
+    this.debugMode = brokkrOpts.debugMode;
+    this.queueManager = new QueueManager(this.client, this.namespace, {
+      debugMode: this.debugMode,
+      ...queueOpts,
+    });
     this.queueManager.start();
   }
 
@@ -29,7 +36,7 @@ class Brokkr {
    * Creates a Saga object and returns it.
    */
   public async createSaga(): Promise<Saga> {
-    const saga = new Saga(this.client, this.namespace);
+    const saga = new Saga(this.client, this.namespace, {debugMode: this.debugMode});
     await saga.create();
     this.queueManager.addSaga(saga);
     return saga;
@@ -78,7 +85,7 @@ class Brokkr {
     );
 
     unfinishedSagas.forEach(sagaValues => {
-      let saga = new Saga(this.client, this.namespace);
+      let saga = new Saga(this.client, this.namespace, {debugMode: this.debugMode});
       saga = saga.instantiate(sagaValues);
       this.queueManager.addSaga(saga);
     });

@@ -40,6 +40,19 @@ class SagaStep extends Entity<ISagaStep> {
    */
   public async createFromSaga(sagaId: string, values: ISagaStep) {
     this.instantiateFromSaga(sagaId, values);
+    const {dependsOn} = values;
+    if (dependsOn) {
+      // Double check that the dependencies are valid
+      const dependentSteps = await getMultiple<ISagaStep>(
+        this.client, this.namespace, getSagaStepTableName(sagaId), dependsOn
+      );
+
+      dependentSteps.forEach((step: ISagaStep, idx: number) => {
+        if (!step || dependentSteps.length !== dependsOn.length) {
+          throw Error(`Error in SagaStep.createFromSaga: Dependent step with id "${dependsOn[idx]}" has not been created.`);
+        }
+      });
+    }
     const newValues = await super.create({
       status: SagaStepStatus.Created,
       ...values,
